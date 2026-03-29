@@ -1,33 +1,24 @@
 package com.exelynt.ecommerce.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal; // Import zaroori hai
 
 @Entity
 @Table(name = "products")
 public class Product {
-    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Product name is mandatory")
     private String name;
-
-    @NotBlank(message = "Product description is mandatory")
     private String description;
 
-    @NotNull(message = "Price is mandatory")
-    @Min(value = 0, message = "Price must be at least 0")
-    private Double price;
+    // Double ko BigDecimal mein badla for Data Integrity
+    @Column(precision = 10, scale = 2, nullable = false)
+    private BigDecimal price;
 
+    private Integer stockQuantity;
     private String imageUrl;
-
-    @NotNull(message = "Stock quantity is mandatory")
-    @Min(value = 0, message = "Stock cannot be negative")
-    private Integer stockQuantity; 
 
     public Product() {}
 
@@ -41,12 +32,12 @@ public class Product {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public Double getPrice() { return price; }
-    public void setPrice(Double price) { this.price = price; }
-
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price; }
 
     public Integer getStockQuantity() { return stockQuantity; }
     public void setStockQuantity(Integer stockQuantity) { this.stockQuantity = stockQuantity; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }

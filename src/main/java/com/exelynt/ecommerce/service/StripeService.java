@@ -6,6 +6,7 @@ import com.stripe.param.checkout.SessionCreateParams;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import jakarta.annotation.PostConstruct;
+import java.math.BigDecimal; // Import zaroori hai
 
 @Service
 public class StripeService {
@@ -18,8 +19,13 @@ public class StripeService {
         Stripe.apiKey = secretKey;
     }
 
-    public String createCheckoutSession(Double amount) {
+    // Double ki jagah ab BigDecimal accept karega
+    public String createCheckoutSession(BigDecimal amount) {
         try {
+            // Stripe cents/paise mein amount leta hai (1 INR = 100 Paise)
+            // Isliye amount ko 100 se multiply karke long mein convert kiya
+            long unitAmount = amount.multiply(new BigDecimal(100)).longValue();
+
             SessionCreateParams params = SessionCreateParams.builder()
                 .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
                 .setMode(SessionCreateParams.Mode.PAYMENT)
@@ -29,7 +35,7 @@ public class StripeService {
                     .setQuantity(1L)
                     .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
                         .setCurrency("inr")
-                        .setUnitAmount((long) (amount * 100))
+                        .setUnitAmount(unitAmount) // Updated value
                         .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
                             .setName("E-commerce Order Payment")
                             .build())

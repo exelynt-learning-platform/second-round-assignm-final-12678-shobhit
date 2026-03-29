@@ -8,7 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,7 +28,8 @@ class ProductServiceTest {
         Product product = new Product();
         product.setId(1L);
         product.setName("Techdrill 2K26 Badge");
-        product.setPrice(199.0);
+      
+        product.setPrice(new BigDecimal("199.00"));
         product.setStockQuantity(50);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
@@ -37,7 +38,7 @@ class ProductServiceTest {
 
         assertNotNull(result);
         assertEquals("Techdrill 2K26 Badge", result.getName());
-        assertEquals(199.0, result.getPrice());
+        assertEquals(0, new BigDecimal("199.00").compareTo(result.getPrice()));
     }
 
     @Test

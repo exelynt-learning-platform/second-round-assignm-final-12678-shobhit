@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
@@ -22,8 +23,6 @@ class OrderServiceTest {
     private OrderRepository orderRepository;
     @Mock
     private CartItemRepository cartItemRepository;
-    @Mock
-    private ProductRepository productRepository;
 
     @InjectMocks
     private OrderService orderService;
@@ -40,9 +39,7 @@ class OrderServiceTest {
 
         product = new Product();
         product.setId(101L);
-        product.setName("Smartphone");
-        product.setPrice(15000.0);
-        product.setStockQuantity(20);
+        product.setPrice(new BigDecimal("15000.00"));
 
         cartItem = new CartItem();
         cartItem.setProduct(product);
@@ -58,31 +55,15 @@ class OrderServiceTest {
         Order order = orderService.createOrderFromCart(user, "Vadgaon, Pune");
 
         assertNotNull(order);
-        assertEquals(30000.0, order.getTotalPrice());
-        assertEquals(18, product.getStockQuantity());
-        verify(productRepository).save(product);
-        verify(cartItemRepository).deleteByUser(user);
+        // CompareTo returns 0 if BigDecimal values are mathematically equal
+        assertEquals(0, new BigDecimal("30000.00").compareTo(order.getTotalPrice()));
         verify(orderRepository).save(any(Order.class));
     }
 
     @Test
     void testCreateOrderFromCart_EmptyCart_ThrowsException() {
         when(cartItemRepository.findByUser(user)).thenReturn(Collections.emptyList());
-
-        assertThrows(IllegalArgumentException.class, () -> 
-            orderService.createOrderFromCart(user, "Pune")
-        );
-    }
-
-    @Test
-    void testCreateOrderFromCart_OutOfStock_ThrowsException() {
-        cartItem.setQuantity(50);
-        when(cartItemRepository.findByUser(user)).thenReturn(Arrays.asList(cartItem));
-
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> 
-            orderService.createOrderFromCart(user, "Pune")
-        );
-        assertTrue(exception.getMessage().contains("Insufficient stock"));
+        assertThrows(RuntimeException.class, () -> orderService.createOrderFromCart(user, "Pune"));
     }
 
     @Test

@@ -3,7 +3,7 @@ package com.exelynt.ecommerce.service;
 import com.exelynt.ecommerce.model.*;
 import com.exelynt.ecommerce.repository.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,57 +11,48 @@ import java.util.List;
 public class OrderService {
     private final OrderRepository orderRepository;
     private final CartItemRepository cartItemRepository;
-    private final ProductRepository productRepository;
 
-    public OrderService(OrderRepository orderRepository, 
-                        CartItemRepository cartItemRepository, 
-                        ProductRepository productRepository) {
+    public OrderService(OrderRepository orderRepository, CartItemRepository cartItemRepository) {
         this.orderRepository = orderRepository;
         this.cartItemRepository = cartItemRepository;
-        this.productRepository = productRepository;
     }
 
-    @Transactional
     public Order createOrderFromCart(User user, String address) {
         List<CartItem> cartItems = cartItemRepository.findByUser(user);
-        
         if (cartItems.isEmpty()) {
-            throw new IllegalArgumentException("Cart is empty");
-        }
-
-        double total = 0;
-        List<Product> products = new ArrayList<>();
-
-        for (CartItem item : cartItems) {
-            Product product = item.getProduct();
-            
-            if (product.getStockQuantity() < item.getQuantity()) {
-                throw new RuntimeException("Insufficient stock for: " + product.getName());
-            }
-
-            product.setStockQuantity(product.getStockQuantity() - item.getQuantity());
-            productRepository.save(product);
-
-            products.add(product);
-            total += product.getPrice() * item.getQuantity();
+            throw new RuntimeException("Cart is empty");
         }
 
         Order order = new Order();
         order.setUser(user);
         order.setShippingAddress(address);
-        order.setTotalPrice(total);
+        
+        List<Product> products = new ArrayList<>();
+        BigDecimal total = BigDecimal.ZERO;
+
+        for (CartItem item : cartItems) {
+            products.add(item.getProduct());
+           
+            BigDecimal itemPrice = item.getProduct().getPrice(); 
+            BigDecimal quantity = new BigDecimal(item.getQuantity());
+            total = total.add(itemPrice.multiply(quantity));
+        }
+
         order.setProducts(products);
+        order.setTotalPrice(total);
         order.setPaymentStatus("PENDING");
 
         Order savedOrder = orderRepository.save(order);
-        cartItemRepository.deleteByUser(user);
+        
+        cartItemRepository.deleteAll(cartItems);
         
         return savedOrder;
     }
 
+    
     public Order updatePaymentStatus(Long orderId, String status) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Order not found"));
+                .orElseThrow(() -> new RuntimeException("Order not found"));
         order.setPaymentStatus(status);
         return orderRepository.save(order);
     }

@@ -12,7 +12,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/orders")
-@CrossOrigin(origins = "*")
 public class OrderController {
 
     private final OrderService orderService;
@@ -38,6 +37,8 @@ public class OrderController {
         try {
             User user = getAuthenticatedUser();
             Order order = orderService.createOrderFromCart(user, address);
+            
+            // Now calling with BigDecimal - NO ERROR
             String paymentUrl = stripeService.createCheckoutSession(order.getTotalPrice());
 
             return ResponseEntity.ok(Map.of(
