@@ -1,4 +1,4 @@
-# 🛒 E-commerce Backend System (Exelynt Assignment)
+# 🛒 E-commerce Backend 
 
 Developed a professional-grade backend using **Spring Boot 3** and **MySQL**.
 
