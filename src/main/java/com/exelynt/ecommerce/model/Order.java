@@ -1,6 +1,7 @@
 package com.exelynt.ecommerce.model;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -11,20 +12,25 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "order_products",
-        joinColumns = @JoinColumn(name = "order_id"),
-        inverseJoinColumns = @JoinColumn(name = "product_id")
+        joinColumns = @JoinColumn(name = "order_id", referencedColumnName = "id"),
+        inverseJoinColumns = @JoinColumn(name = "product_id", referencedColumnName = "id")
     )
     private List<Product> products;
 
-    private Double totalPrice;
+    // Double ki jagah BigDecimal for financial accuracy
+    @Column(precision = 10, scale = 2, nullable = false)
+    private BigDecimal totalPrice;
+
     private String shippingAddress;
+    
+    @Column(nullable = false)
     private String paymentStatus = "PENDING";
     
     @Column(nullable = false, updatable = false)
@@ -33,11 +39,14 @@ public class Order {
     @PrePersist
     protected void onCreate() {
         orderDate = LocalDateTime.now();
+        if (totalPrice == null) {
+            totalPrice = BigDecimal.ZERO;
+        }
     }
 
     public Order() {}
 
-    // Getters and Setters
+    
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -47,8 +56,8 @@ public class Order {
     public List<Product> getProducts() { return products; }
     public void setProducts(List<Product> products) { this.products = products; }
 
-    public Double getTotalPrice() { return totalPrice; }
-    public void setTotalPrice(Double totalPrice) { this.totalPrice = totalPrice; }
+    public BigDecimal getTotalPrice() { return totalPrice; }
+    public void setTotalPrice(BigDecimal totalPrice) { this.totalPrice = totalPrice; }
 
     public String getShippingAddress() { return shippingAddress; }
     public void setShippingAddress(String shippingAddress) { this.shippingAddress = shippingAddress; }
